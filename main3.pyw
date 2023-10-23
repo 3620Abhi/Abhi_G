@@ -3,7 +3,9 @@ from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import lit_with_shadows_shader, basic_lighting_shader, unlit_shader, noise_fog_shader
 from functools import partial
+from panda3d.ai import AIWorld,AICharacter
 #from ursina.editor.level_editor import LevelEditor
+app = Ursina()
 
 score = 0
 bullet_list = []
@@ -11,12 +13,19 @@ enemy_list = []
 shooting = True
 
 class Enemy(Entity):
-    def __init__(self, value = 5, **kwargs):
+    def __init__(self,AiWorld,target, value = 5, **kwargs):
         super().__init__(model = 'cube',
                          scale = (2,4,2),
                          color = color.red,
                          collider = 'box',
                          **kwargs)
+        self.AIchar = AICharacter("seeker",self.model, 100, 0.05, 5)
+
+        AiWorld.addAiChar(self.AIchar)
+
+        self.AIbehaviors = self.AIchar.getAiBehaviors()
+        self.AIbehaviors.seek(target)
+
         self.value = value
         self.refreshing = False
         self.maxhealth = 100
@@ -269,7 +278,6 @@ class Player(Entity):
 def update():
     score_text.text = f'Score {score}'
 
-app = Ursina()
 Entity.default_shader = basic_lighting_shader
 Text.default_resolution = 1080 * Text.size
 
