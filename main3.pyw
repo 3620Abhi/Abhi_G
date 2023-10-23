@@ -11,7 +11,7 @@ score = 0
 bullet_list = []
 enemy_list = []
 shooting = True
-
+AiWorld = AIWorld(render)
 class Enemy(Entity):
     def __init__(self,AiWorld,target, value = 5, **kwargs):
         super().__init__(model = 'cube',
@@ -24,7 +24,8 @@ class Enemy(Entity):
         AiWorld.addAiChar(self.AIchar)
 
         self.AIbehaviors = self.AIchar.getAiBehaviors()
-        self.AIbehaviors.seek(target)
+
+        self.AIbehaviors.pursue(target)
 
         self.value = value
         self.refreshing = False
@@ -80,12 +81,13 @@ class Player(Entity):
     def __init__(self, **kwargs):
         global score
         self.controller = FirstPersonController(**kwargs)
+
         super().__init__(parent = self.controller)
         self.m4a1_gun = Entity(parent = self.controller.camera_pivot,
                                position = (0.7, -0.5, 1.3),
                                scale = 0.09,
                                rotation = (0, 180, 0),
-                               model = 'map',
+                               model = 'shotgun',
                                texture = 'weapon',
                                shader = basic_lighting_shader,
                                #always_on_top = True,
@@ -277,6 +279,7 @@ class Player(Entity):
 
 def update():
     score_text.text = f'Score {score}'
+    AiWorld.update()
 
 Entity.default_shader = basic_lighting_shader
 Text.default_resolution = 1080 * Text.size
@@ -347,19 +350,20 @@ ground = Entity(model='map2',
                 #shader = lit_with_shadows_shader)
 
 #editor = LevelEditor()
-for i in range(5):
-    e = Enemy(position = (4+i*4, 3, 2))
-    enemy_list.append(e)
 
 player = Player(position = (0, 10, 0),
                 speed = 10,
                 mouse_sensitivity = Vec2(40, 40),
-                gravity = 1,
+                gravity = 0,
                 jump_up_duration = 0.7,
                 air_time = 0.5,
                 fall_after = .35,
                 height = 2,
-                jump_height = 4)
+                jump_height = 4,collider = "mesh")
+
+for i in range(5):
+    e = Enemy(position = (4+i*4, 3, 2),AiWorld=AiWorld,target=player)
+    enemy_list.append(e)
 
 ignore_list = (boundary_wall, player)
 
