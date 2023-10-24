@@ -128,6 +128,9 @@ class Player(Entity):
         elif self.current_weapon == 1:
             ofx = 1
             ofy = 1
+        elif self.current_weapon == 2:
+            ofx = 1
+            ofy = 2
         g.shake(duration=.1, magnitude=0.2 * ofx, speed=.01, direction=(1,1*ofy), delay=0, attr_name='position', interrupt='finish')
         
     def shoot_animation(self):
@@ -140,6 +143,13 @@ class Player(Entity):
             of = 1
         elif self.current_weapon == 1:
             of = 2.5
+        elif self.current_weapon == 2:
+            if held_keys['right mouse']:
+                of = 0.5
+                r = 0
+            else:
+                of = 5.5
+                r*=5
         self.controller.camera_pivot.rotation-=(1.4 * of ,0.5*offset*r,0)
         gun = self.weapons[self.current_weapon]
         invoke(partial(self.lerp_animation, gun), delay = (0.01))
@@ -155,6 +165,9 @@ class Player(Entity):
         elif self.current_weapon == 1:
                 self.bulletcount-=(self.maxmagcounts-self.magcounts)
                 self.magcounts = self.maxmagcounts
+        elif self.current_weapon == 2:
+                self.bulletcount-=(self.maxmagcountsnp-self.magcountsnp)
+                self.magcountsnp = self.maxmagcountsnp
         print('Reloaded', self.bulletcount)
         self.reloading = False
         
@@ -209,10 +222,10 @@ class Player(Entity):
                    damage = d,
                    position = gun.world_position + (-0.1,0.1,0),
                    rotation = self.controller.camera_pivot.world_rotation + (rx,ry,0)  + (-rx*a,ry*a,0))
-        if self.current_weapon == 0:
+        elif self.current_weapon == 2:
             gun = self.gun_pivot2
-            d = 15
-            Bullet(speed = 350,
+            d = 120
+            Bullet(speed = 1550,
                    unlit = True,
                    damage = d,
                    position = gun.world_position,
@@ -229,6 +242,10 @@ class Player(Entity):
             if self.shooting and (self.magcounts >= 1) and not self.reloading:
                 self.Shoot()
                 self.magcounts -=1
+        elif self.current_weapon == 2:
+            if self.shooting and (self.magcountsnp >= 1) and not self.reloading:
+                self.Shoot()
+                self.magcountsnp -=1
         if self.current_weapon == 0:
             if self.magcount<=0:
                 self.reloading = True
@@ -237,6 +254,10 @@ class Player(Entity):
             if self.magcounts<=0:
                 self.reloading = True
                 invoke(self.reload, delay = 2.5)
+        elif self.current_weapon == 2:
+            if self.magcountsnp<=0:
+                self.reloading = True
+                invoke(self.reload, delay = 6.5)
 
     def input(self, key):
         if key == 'left mouse down':
@@ -248,6 +269,8 @@ class Player(Entity):
                 invoke(self.reload, delay = 3)
             elif self.current_weapon == 1:
                 invoke(self.reload, delay = 2.5)
+            elif self.current_weapon == 2:
+                invoke(self.reload, delay = 6.5)
             
         elif key == 'scroll up':
             if self.current_weapon != len(self.weapons)-1:
@@ -263,6 +286,8 @@ class Player(Entity):
             self.current_weapon = 0
         elif key == '2':
             self.current_weapon = 1
+        elif key == '3':
+            self.current_weapon = 2
         if self.reloading or (self.shooting == True and not held_keys['left mouse']):
             self.shooting = False
             
@@ -275,7 +300,7 @@ class Player(Entity):
         elif self.current_weapon == 1:
             self.mag_text.text = f'{self.magcounts}'
         elif self.current_weapon == 2:
-            pass
+            self.mag_text.text = f'{self.magcountsnp}'
         for ind, i in enumerate(self.weapons):
             if ind == self.current_weapon:
                 i.visible = True
