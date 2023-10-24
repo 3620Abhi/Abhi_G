@@ -19,33 +19,42 @@ class Enemy(Entity):
                          color = color.red,
                          collider = 'box',
                          **kwargs)
-        self.AIchar = AICharacter("seeker",self.model, 100, 0.05, 5)
+        self.AIchar = AICharacter("seeker",self, 100, 0.05, 5)
 
         AiWorld.addAiChar(self.AIchar)
 
         self.AIbehaviors = self.AIchar.getAiBehaviors()
 
-        self.AIbehaviors.pursue(target)
+        self.AIbehaviors.pursue(target,2)
+        self.AIbehaviors.evade(target,13,20,.8)
+        # self.AIbehaviors.pauseAi("evade")
 
         self.value = value
         self.refreshing = False
-        self.maxhealth = 100
+        self.maxhealth = 10
         self.health = self.maxhealth
-
+   
     def refresh(self):
         global score, score_text
         score += self.value
-        self.visible = True
-        self.collision = True
         self.health = self.maxhealth
         self.refreshing = False
-        
+        self.AIbehaviors.resumeAi("pursue")
+        # self.AIbehaviors.pauseAi("evade")
+
     def update(self):
         if self.health<=0 and not self.refreshing:
-            self.visible = False
-            self.collision = False
+            # self.collision = False
             self.refreshing = True
             invoke(self.refresh, delay = 3)
+            self.AIbehaviors.pauseAi("pursue")
+            # self.AIbehaviors.resumeAi("evade")
+
+            print("hel",self.health)
+        if self.health < self.maxhealth:
+            self.color = color.red
+        else:
+            self.color = color.gray
 
 class Bullet(Entity):
     def __init__(self, speed, damage, **kwargs):
@@ -70,13 +79,15 @@ class Bullet(Entity):
             for i in e_list:
                 if i in enemy_list:
                     i.health -= self.damage
+                    print("Hi")
             destroy(self)
+
         else:
             self.velocity += self.acceleration*time.dt
             self.velocity += self.acceleration*time.dt
             self.position += self.velocity*time.dt
             self.position += self.forward*self.speed*time.dt        
-            
+
 class Player(Entity):
     def __init__(self, **kwargs):
         global score
@@ -361,10 +372,10 @@ player = Player(position = (0, 10, 0),
                 height = 2,
                 jump_height = 4,collider = "mesh")
 
-for i in range(5):
+for i in range(7):
     e = Enemy(position = (4+i*4, 3, 2),AiWorld=AiWorld,target=player)
     enemy_list.append(e)
-
+print(enemy_list)
 ignore_list = (boundary_wall, player)
 
 app.run()
